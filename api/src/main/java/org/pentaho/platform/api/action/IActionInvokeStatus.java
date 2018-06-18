@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.api.action;
@@ -51,4 +54,19 @@ public interface IActionInvokeStatus {
   Object getStreamProvider();
 
   void setStreamProvider( final Object streamProvider );
+
+  /**
+   * Return the success/failure of the execution. Added default method to maintain backward compatibility.
+   * @return boolean
+   */
+  default boolean isExecutionSuccessful() {
+    return true;
+  }
+
+  /**
+   * Set the execution status. Added default method to maintain backward compatibility.
+   * @param status boolean
+   */
+  default void setExecutionStatus( boolean status ) {
+  }
 }

@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.scheduler2.messsages;
@@ -39,6 +42,10 @@ public class Messages extends MessagesBase {
   public String getRunningInBackgroundLocally( final String actionIdentifier, final Map params ) {
     return getString( "ActionInvoker.INFO_0001_RUNNING_IN_BG_LOCALLY", actionIdentifier,
       StringUtil.getMapAsPrettyString( params ) );
+  }
+
+  public String getUnsupportedAction( final String action ) {
+    return getErrorString( "ActionInvoker.ERROR_0006_ACTION_NULL", action );
   }
 
   public String getCantInvokeNullAction() {

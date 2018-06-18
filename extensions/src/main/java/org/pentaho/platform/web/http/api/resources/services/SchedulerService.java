@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.web.http.api.resources.services;
@@ -39,7 +42,6 @@ import org.pentaho.platform.api.scheduler2.SchedulerException;
 import org.pentaho.platform.engine.core.system.PentahoSessionHolder;
 import org.pentaho.platform.engine.core.system.PentahoSystem;
 import org.pentaho.platform.engine.security.SecurityHelper;
-import org.pentaho.platform.repository.RepositoryFilenameUtils;
 import org.pentaho.platform.repository2.unified.webservices.RepositoryFileDto;
 import org.pentaho.platform.scheduler2.blockout.BlockoutAction;
 import org.pentaho.platform.scheduler2.quartz.QuartzScheduler;
@@ -131,6 +133,10 @@ public class SchedulerService {
       }
     }
 
+    if ( scheduleRequest.getTimeZone() != null ) {
+      updateStartDateForTimeZone( scheduleRequest );
+    }
+
     Job job = null;
 
     IJobTrigger jobTrigger = SchedulerResourceUtil.convertScheduleRequestToJobTrigger( scheduleRequest, scheduler );
@@ -147,12 +153,14 @@ public class SchedulerService {
 
     parameterMap.put( LocaleHelper.USER_LOCALE_PARAM, LocaleHelper.getLocale() );
 
+    if ( scheduleRequest.getUseWorkerNodes() != null && !scheduleRequest.getUseWorkerNodes().trim().isEmpty() ) {
+      parameterMap.put( "useWorkerNodes", scheduleRequest.getUseWorkerNodes().trim() );
+    }
+
     if ( hasInputFile ) {
       SchedulerOutputPathResolver outputPathResolver = getSchedulerOutputPathResolver( scheduleRequest );
       String outputFile = outputPathResolver.resolveOutputFilePath();
-      String actionId =
-        getExtension( scheduleRequest.getInputFile() )
-          + ".backgroundExecution"; //$NON-NLS-1$ //$NON-NLS-2$
+      String actionId = SchedulerResourceUtil.resolveActionId( scheduleRequest.getInputFile() );
       final String inputFile = scheduleRequest.getInputFile();
       parameterMap.put( ActionUtil.QUARTZ_STREAMPROVIDER_INPUT_FILE,  inputFile );
       job =
@@ -376,7 +384,6 @@ public class SchedulerService {
         jobScheduleRequest.getDuration() ) );
       jobScheduleRequest.getJobParameters()
         .add( getJobScheduleParam( IBlockoutManager.TIME_ZONE_PARAM, jobScheduleRequest.getTimeZone() ) );
-      updateStartDateForTimeZone( jobScheduleRequest );
       return createJob( jobScheduleRequest );
     }
     throw new IllegalAccessException();
@@ -551,8 +558,12 @@ public class SchedulerService {
     return false;
   }
 
+  protected String resolveActionId( final String inputFile ) {
+    return SchedulerResourceUtil.resolveActionId( inputFile );
+  }
+
   protected String getExtension( String filename ) {
-    return RepositoryFilenameUtils.getExtension( filename );
+    return SchedulerResourceUtil.getExtension( filename );
   }
 
   /**

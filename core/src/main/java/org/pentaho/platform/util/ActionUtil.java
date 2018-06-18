@@ -1,18 +1,21 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
- * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
+ * terms of the GNU General Public License, version 2 as published by the Free Software
  * Foundation.
  *
- * You should have received a copy of the GNU Lesser General Public License along with this
- * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+ * You should have received a copy of the GNU General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/gpl-2.0.html
  * or from the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU Lesser General Public License for more details.
+ * See the GNU General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.util;
@@ -49,6 +52,8 @@ public class ActionUtil {
   public static final String QUARTZ_STREAMPROVIDER = "ActionAdapterQuartzJob-StreamProvider"; //$NON-NLS-1$
   public static final String QUARTZ_STREAMPROVIDER_INPUT_FILE =
     "ActionAdapterQuartzJob-StreamProvider-InputFile"; //$NON-NLS-1$
+  public static final String QUARTZ_STREAMPROVIDER_INLINE_INPUT_FILE = "input file ="; //$NON-NLS-1$
+  public static final String QUARTZ_STREAMPROVIDER_INLINE_OUTPUT_FILE = ":output file="; //$NON-NLS-1$
   public static final String QUARTZ_UIPASSPARAM = "uiPassParam"; //$NON-NLS-1$
   public static final String QUARTZ_LINEAGE_ID = "lineage-id"; //$NON-NLS-1$
   public static final String QUARTZ_RESTART_FLAG = "ActionAdapterQuartzJob-Restart"; //$NON-NLS-1$
@@ -207,11 +212,47 @@ public class ActionUtil {
     // corresponding action keys (see KEY_MAP), fall back on the quartz key, if the action key cannot be found
     final String userName = Optional.ofNullable( (String) params.get( INVOKER_ACTIONUSER ) ).orElse( (String) params
       .get( QUARTZ_ACTIONUSER ) );
-    final String inputFilePath = Optional.ofNullable( (String) params.get( INVOKER_STREAMPROVIDER_INPUT_FILE ) )
+    String inputFilePath = Optional.ofNullable( (String) params.get( INVOKER_STREAMPROVIDER_INPUT_FILE ) )
       .orElse( (String) params.get( QUARTZ_STREAMPROVIDER_INPUT_FILE ) );
+
+    // if we still cannot find the inputFile, we have one last attempt: check for inline passing of input and output files,
+    // represented by 'ActionAdapterQuartzJob-StreamProvider -> input file = <path><colon>output file=<path>
+    if ( StringUtil.isEmpty( inputFilePath ) && isInlinePassingOfInputOnStreamProvider( params ) ) {
+      inputFilePath = getInlineInputFileOnStreamProvider( params );
+    }
+
     return generateWorkItemUid( inputFilePath, userName );
   }
 
+  public static boolean isInlinePassingOfInputOnStreamProvider( final Map<String, Serializable> params ) {
+    return params != null && getStreamProviderContent( params ).contains( QUARTZ_STREAMPROVIDER_INLINE_INPUT_FILE );
+  }
+
+  public static String getInlineInputFileOnStreamProvider( final Map<String, Serializable> params ) {
+
+    try {
+
+      String streamProviderContent = getStreamProviderContent( params );
+
+      int startIdx = streamProviderContent.indexOf( QUARTZ_STREAMPROVIDER_INLINE_INPUT_FILE ) + QUARTZ_STREAMPROVIDER_INLINE_INPUT_FILE.length();
+      int endIdx = streamProviderContent.indexOf( QUARTZ_STREAMPROVIDER_INLINE_OUTPUT_FILE );
+
+      if ( startIdx >= 0 && endIdx >= 0 && endIdx > startIdx ) {
+        return streamProviderContent.substring( startIdx, endIdx ).trim();
+      }
+
+    } catch ( Throwable t ) {
+      logger.error( t );
+    }
+
+    return null;
+  }
+
+  public static String getStreamProviderContent( final Map<String, Serializable> params ) {
+    return ( params.containsKey( QUARTZ_STREAMPROVIDER )
+            ? params.get( QUARTZ_STREAMPROVIDER ) : params.containsKey( INVOKER_STREAMPROVIDER )
+            ? params.get( INVOKER_STREAMPROVIDER ) : StringUtils.EMPTY ).toString().trim();
+  }
 
   /**
    * Returns a unique id for a work item which includes the input file name (derived from {@code inputFilePath}),
@@ -264,6 +305,22 @@ public class ActionUtil {
    * @throws Exception           when the required parameters are not provided
    */
   static Class<?> resolveActionClass( final String actionClassName, final String beanId ) throws
+          PluginBeanException, ActionInvocationException {
+    return resolveActionClass( actionClassName, beanId, true /* default retryBeanInstantiationIfFailed */ );
+  }
+
+  /**
+   * Returns the {@link Class} that corresponds to the provides {@code actionClassName} and {@code beanId}.
+   *
+   * @param actionClassName the name of the class being resolved
+   * @param beanId          the beanId of the class being resolved
+   * @param retryBeanInstantiationIfFailed re-trigger bean instantiation attempt, should it fail for some reason
+   * @return the {@link Class} that corresponds to the provides {@code actionClassName} and {@code beanId}
+   * @throws PluginBeanException when the plugin required to resolve the bean class from the {@code beanId} cannot be
+   *                             created
+   * @throws Exception           when the required parameters are not provided
+   */
+  static Class<?> resolveActionClass( final String actionClassName, final String beanId, final boolean retryBeanInstantiationIfFailed ) throws
       PluginBeanException, ActionInvocationException {
 
     Class<?> clazz = null;
@@ -273,7 +330,10 @@ public class ActionUtil {
           "ActionUtil.ERROR_0001_REQUIRED_PARAM_MISSING", INVOKER_ACTIONCLASS, INVOKER_ACTIONID ) );
     }
 
-    for ( int i = 0; i < RETRY_COUNT; i++ ) {
+    final long retryCount = ( retryBeanInstantiationIfFailed ? RETRY_COUNT : 1 );
+    final long retrySleepCount = ( retryBeanInstantiationIfFailed ? RETRY_SLEEP_AMOUNT : 1 ); // millis
+
+    for ( int i = 0; i < retryCount; i++ ) {
       try {
         if ( !StringUtils.isEmpty( beanId ) ) {
           IPluginManager pluginManager = PentahoSystem.get( IPluginManager.class );
@@ -289,7 +349,7 @@ public class ActionUtil {
         }
       } catch ( Throwable t ) {
         try {
-          Thread.sleep( RETRY_SLEEP_AMOUNT );
+          Thread.sleep( retrySleepCount );
         } catch ( InterruptedException ie ) {
           logger.info( ie.getMessage(), ie );
         }
@@ -312,11 +372,24 @@ public class ActionUtil {
    * @throws Exception when the {@link IAction} cannot be created for some reason
    */
   public static IAction createActionBean( final String actionClassName, final String actionId ) throws
+          ActionInvocationException {
+    return createActionBean( actionClassName, actionId, true /* default retryBeanInstantiationIfFailed */ );
+  }
+
+  /**
+   * Returns an instance of {@link IAction} created from the provided parameters.
+   *
+   * @param actionClassName the name of the class being resolved
+   * @param actionId        the is of the action which corresponds to some bean id
+   * @return {@link IAction} created from the provided parameters.
+   * @throws Exception when the {@link IAction} cannot be created for some reason
+   */
+  public static IAction createActionBean( final String actionClassName, final String actionId, final boolean retryBeanInstantiationIfFailed ) throws
       ActionInvocationException {
     Object actionBean = null;
     Class<?> actionClass = null;
     try {
-      actionClass = resolveActionClass( actionClassName, actionId );
+      actionClass = resolveActionClass( actionClassName, actionId, retryBeanInstantiationIfFailed );
       actionBean = actionClass.newInstance();
     } catch ( final Exception e ) {
       throw new ActionInvocationException( Messages.getInstance().getErrorString(

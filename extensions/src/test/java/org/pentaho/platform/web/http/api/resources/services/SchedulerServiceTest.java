@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,8 +13,11 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
+
 package org.pentaho.platform.web.http.api.resources.services;
 
 import static org.junit.Assert.assertEquals;
@@ -107,6 +111,8 @@ public class SchedulerServiceTest {
     doReturn( "jobName" ).when( scheduleRequest ).getJobName();
     doReturn( jobParameters ).when( scheduleRequest ).getJobParameters();
     doNothing().when( scheduleRequest ).setJobName( anyString() );
+    doReturn( "timezone" ).when( scheduleRequest ).getTimeZone();
+    doNothing().when( schedulerService ).updateStartDateForTimeZone( scheduleRequest );
 
     doReturn( true ).when( schedulerService ).isPdiFile( any( RepositoryFile.class ) );
 
@@ -133,7 +139,7 @@ public class SchedulerServiceTest {
     doReturn( "file.ext" ).when( scheduleRequest ).getInputFile();
     doReturn( repositoryFile ).when( schedulerService.repository ).getFile( anyString() );
 
-    doReturn( "ext" ).when( schedulerService ).getExtension( anyString() );
+    doReturn( "ext.backgroundExecution" ).when( schedulerService ).resolveActionId( anyString() );
 
     doReturn( true ).when( schedulerService ).getAutoCreateUniqueFilename( any( JobScheduleRequest.class ) );
 
@@ -171,9 +177,10 @@ public class SchedulerServiceTest {
     verify( schedulerService, times( 3 ) ).isPdiFile( any( RepositoryFile.class ) );
     verify( schedulerService, times( 3 ) ).handlePDIScheduling( any( RepositoryFile.class ), any( HashMap.class ), any( HashMap.class ) );
     verify( schedulerService, times( 2 ) ).getSchedulerOutputPathResolver( any( JobScheduleRequest.class ) );
-    verify( schedulerService, times( 2 ) ).getExtension( anyString() );
+    //verify( schedulerService, times( 2 ) ).resolveActionId( anyString() );
     verify( scheduleRequest, times( 5 ) ).getActionClass();
     verify( schedulerService ).getAction( anyString() );
+    verify( schedulerService, times( 3 ) ).updateStartDateForTimeZone( scheduleRequest );
     verify( schedulerService.scheduler )
         .createJob( anyString(), any( Class.class ), any( Map.class ), any( IJobTrigger.class ) );
   }
@@ -220,7 +227,7 @@ public class SchedulerServiceTest {
     doReturn( "file.ext" ).when( scheduleRequest ).getInputFile();
     doReturn( repositoryFile ).when( schedulerService.repository ).getFile( anyString() );
 
-    doReturn( "ext" ).when( schedulerService ).getExtension( anyString() );
+    doReturn( "ext.backgroundExecution" ).when( schedulerService ).resolveActionId( anyString() );
 
     doReturn( true ).when( schedulerService ).getAutoCreateUniqueFilename( any( JobScheduleRequest.class ) );
 
@@ -918,7 +925,6 @@ public class SchedulerServiceTest {
     verify( schedulerService ).canAdminister();
     verify( jobScheduleRequest ).setActionClass( anyString() );
     verify( jobScheduleRequest, times( 2 ) ).getJobParameters();
-    verify( schedulerService ).updateStartDateForTimeZone( jobScheduleRequest );
     verify( schedulerService ).createJob( any( JobScheduleRequest.class ) );
   }
 
@@ -974,7 +980,6 @@ public class SchedulerServiceTest {
     verify( schedulerService, times( 3 ) ).canAdminister();
     verify( jobScheduleRequest, times( 2 ) ).setActionClass( anyString() );
     verify( jobScheduleRequest, times( 4 ) ).getJobParameters();
-    verify( schedulerService, times( 2 ) ).updateStartDateForTimeZone( jobScheduleRequest );
     verify( schedulerService, times( 2 ) ).createJob( any( JobScheduleRequest.class ) );
   }
 

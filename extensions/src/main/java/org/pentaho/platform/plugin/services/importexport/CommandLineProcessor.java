@@ -1,19 +1,21 @@
-/*
+/*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
- * terms of the GNU General Public License, version 2 as published by the Free Software
+ * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
  *
- * You should have received a copy of the GNU General Public License along with this
- * program; if not, you can obtain a copy at http://www.gnu.org/licenses/gpl-2.0.html
+ * You should have received a copy of the GNU Lesser General Public License along with this
+ * program; if not, you can obtain a copy at http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
  * or from the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
+ * See the GNU Lesser General Public License for more details.
  *
  *
- * Copyright 2006 - 2017 Hitachi Vantara.  All rights reserved.
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.plugin.services.importexport;
@@ -146,6 +148,10 @@ public class CommandLineProcessor {
   private static final String INFO_OPTION_ANALYSIS_XMLA_ENABLED_NAME = "xmla-enabled";
   private static final String INFO_OPTION_METADATA_DOMAIN_ID_KEY = "m_id";
   private static final String INFO_OPTION_METADATA_DOMAIN_ID_NAME = "metadata-domain-id";
+  private static final String INFO_OPTION_APPLY_ACL_SETTINGS_KEY = "a_acl";
+  private static final String INFO_OPTION_APPLY_ACL_SETTINGS_NAME = "applyAclSettings";
+  private static final String INFO_OPTION_OVERWRITE_ACL_SETTINGS_KEY = "o_acl";
+  private static final String INFO_OPTION_OVERWRITE_ACL_SETTINGS_NAME = "overwriteAclSettings";
 
   public static enum RequestType {
     HELP, IMPORT, EXPORT, REST, BACKUP, RESTORE
@@ -241,6 +247,12 @@ public class CommandLineProcessor {
 
     options.addOption( INFO_OPTION_METADATA_DOMAIN_ID_KEY, INFO_OPTION_METADATA_DOMAIN_ID_NAME, true, Messages.getInstance()
             .getString( "CommandLineProcessor.INFO_OPTION_METADATA_DOMAIN_ID_DESCRIPTION" ) );
+
+    options.addOption( INFO_OPTION_APPLY_ACL_SETTINGS_KEY, INFO_OPTION_APPLY_ACL_SETTINGS_NAME, true, Messages.getInstance()
+            .getString( "CommandLineProcessor.INFO_OPTION_APPLY_ACL_SETTINGS" ) );
+
+    options.addOption( INFO_OPTION_OVERWRITE_ACL_SETTINGS_KEY, INFO_OPTION_OVERWRITE_ACL_SETTINGS_NAME, true, Messages.getInstance()
+            .getString( "CommandLineProcessor.INFO_OPTION_OVERWRITE_ACL_SETTINGS" ) );
   }
 
   /**
@@ -755,6 +767,10 @@ public class CommandLineProcessor {
 
       String overwrite = getOptionValue( INFO_OPTION_OVERWRITE_NAME, true, false );
       part.field( "overwriteFile", "true".equals( overwrite ) ? "true" : "false", MediaType.MULTIPART_FORM_DATA_TYPE );
+      String applyAclSettings = getOptionValue( INFO_OPTION_APPLY_ACL_SETTINGS_NAME, false, true );
+      part.field( "applyAclSettings", !"false".equals( applyAclSettings ) ? "true" : "false", MediaType.MULTIPART_FORM_DATA_TYPE );
+      String overwriteAclSettings = getOptionValue( INFO_OPTION_OVERWRITE_ACL_SETTINGS_NAME, false, true );
+      part.field( "overwriteAclSettings", "true".equals( overwriteAclSettings ) ? "true" : "false", MediaType.MULTIPART_FORM_DATA_TYPE );
 
       // Response response
       ClientResponse response = resource.type( MediaType.MULTIPART_FORM_DATA ).post( ClientResponse.class, part );

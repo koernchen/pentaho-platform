@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.scheduler2.action;
@@ -72,9 +75,13 @@ public class ActionRunner implements Callable<Boolean> {
   public Boolean call() throws ActionInvocationException {
     final String workItemUid = ActionUtil.extractUid( params );
     try {
-      final boolean result = callImpl();
-      WorkItemLifecycleEventUtil.publish( workItemUid, params, WorkItemLifecyclePhase.SUCCEEDED );
-      return result;
+      final ExecutionResult result = callImpl();
+      if ( result.isSuccess() ) {
+        WorkItemLifecycleEventUtil.publish( workItemUid, params, WorkItemLifecyclePhase.SUCCEEDED );
+      } else {
+        WorkItemLifecycleEventUtil.publish( workItemUid, params, WorkItemLifecyclePhase.FAILED );
+      }
+      return result.updateRequired();
     } catch ( final Throwable t ) {
       // ensure that the main thread isn't blocked on lock
       synchronized ( lock ) {
@@ -88,7 +95,9 @@ public class ActionRunner implements Callable<Boolean> {
     }
   }
 
-  private Boolean callImpl() throws Exception {
+  private ExecutionResult callImpl() throws Exception {
+    boolean executionStatus = true;
+
     final Object locale = params.get( LocaleHelper.USER_LOCALE_PARAM );
     if ( locale instanceof Locale ) {
       LocaleHelper.setLocaleOverride( (Locale) locale );
@@ -152,7 +161,7 @@ public class ActionRunner implements Callable<Boolean> {
     }
 
     actionBean.execute();
-
+    executionStatus = actionBean.isExecutionSuccessful();
     if ( stream != null ) {
       IOUtils.closeQuietly( stream );
     }
@@ -170,7 +179,10 @@ public class ActionRunner implements Callable<Boolean> {
       closeContentOutputStreams( (IPostProcessingAction) actionBean );
       markContentAsGenerated( (IPostProcessingAction) actionBean );
     }
-    return updateJob;
+
+    // Create the ExecutionResult to return the status and whether the update is required or not
+    ExecutionResult executionResult = new ExecutionResult( updateJob, executionStatus );
+    return executionResult;
   }
 
   private void deleteEmptyFile() {
@@ -220,5 +232,26 @@ public class ActionRunner implements Callable<Boolean> {
       return ( (FileContentItem) contentItem ).getFile().getName();
     }
     return null;
+  }
+
+  /**
+   * Class to hold the result of the invoke Action
+   */
+  private class ExecutionResult {
+    private boolean updateRequired;
+    private boolean isSuccess;
+
+    public ExecutionResult( Boolean updateRequired, Boolean isSuccess ) {
+      this.updateRequired = updateRequired;
+      this.isSuccess = isSuccess;
+    }
+    public Boolean updateRequired() {
+      return updateRequired;
+    }
+
+    public Boolean isSuccess() {
+      return isSuccess;
+    }
+
   }
 }

@@ -13,6 +13,7 @@
   <properties>
     <snakeyaml.version>1.13</snakeyaml.version>
     <rdbms>hsqldb</rdbms>
+    <commons-database.version>8.1.0.0-SNAPSHOT</commons-database.version>
     <prepared.war.directory>${pentaho-server.directory}/tomcat/webapps/pentaho</prepared.war.directory>
     <pentaho-hadoop-shims-api.version>8.1.0.0-SNAPSHOT</pentaho-hadoop-shims-api.version>
     <prepared.war.lib.directory>${prepared.war.directory}/WEB-INF/lib</prepared.war.lib.directory>
@@ -30,9 +31,14 @@
     <jcommon-xml.version>1.0.12</jcommon-xml.version>
     <svgSalamander.version>1.0</svgSalamander.version>
     <package.resources.directory>${basedir}/src/main/webapp</package.resources.directory>
-    <jackson.version>1.9.13</jackson.version>
+    <!-- jackson-databind depends on jackson-core and jackson-annotations
+    so that this artifacts have the same version to prevent compile errors -->
+    <fasterxml.jackson.core.version>2.9.4</fasterxml.jackson.core.version>
     <replacer.version>1.5.2</replacer.version>
     <kafka-clients.version>0.10.2.1</kafka-clients.version>
+    <paho.version>1.2.0</paho.version>
+    <rxjava.version>2.0.4</rxjava.version>
+    <apache-log4j-extras>1.2.17</apache-log4j-extras>
   </properties>
   <dependencies>
     <dependency>
@@ -108,9 +114,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>pentaho</groupId>
-      <artifactId>pentaho-database-model</artifactId>
-      <version>${project.version}</version>
+      <groupId>org.pentaho</groupId>
+      <artifactId>commons-database-model</artifactId>
+      <version>${commons-database.version}</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
@@ -867,28 +873,6 @@
       <version>${pentaho-hadoop-shims-api.version}</version>
     </dependency>
     <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>serializer</artifactId>
-      <version>${xalan.version}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>*</artifactId>
-          <groupId>*</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>xalan</groupId>
-      <artifactId>xalan</artifactId>
-      <version>${xalan.version}</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>*</artifactId>
-          <groupId>*</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.apache.xmlgraphics</groupId>
       <artifactId>xmlgraphics-commons</artifactId>
       <version>${xmlgraphics-commons.version}</version>
@@ -915,14 +899,37 @@
       <version>${hibernate-ehcache.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-mapper-asl</artifactId>
-      <version>${jackson.version}</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>${fasterxml.jackson.core.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.jackson</groupId>
-      <artifactId>jackson-core-asl</artifactId>
-      <version>${jackson.version}</version>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${fasterxml.jackson.core.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>${fasterxml.jackson.core.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>*</artifactId>
+          <groupId>*</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
@@ -1064,6 +1071,27 @@
           <artifactId>*</artifactId>
         </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.paho</groupId>
+      <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+      <version>${paho.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.reactivex.rxjava2</groupId>
+      <artifactId>rxjava</artifactId>
+      <version>${rxjava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>apache-log4j-extras</artifactId>
+      <version>${apache-log4j-extras}</version>
     </dependency>
   </dependencies>
   <build>

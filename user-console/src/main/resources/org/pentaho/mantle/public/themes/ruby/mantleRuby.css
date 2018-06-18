@@ -1435,7 +1435,8 @@ div#customDropdownPopupMajor .gwt-MenuBar-vertical .gwt-MenuItem:hover:not(.gwt-
 
 .users-roles-list {
   height: 100%;
-  overflow: hidden;
+  overflow: auto;
+  overflow-x:hidden;
 }
 
 .pentaho-tab-panel, #userRolesAdminPanel .pentaho-tab-panel {
@@ -1457,7 +1458,8 @@ div#customDropdownPopupMajor .gwt-MenuBar-vertical .gwt-MenuItem:hover:not(.gwt-
 }
 
 .users-roles-selection-list {
-  overflow: hidden;
+  overflow: auto;
+  overflow-x:hidden;
   height: 317px;
 }
 
@@ -1494,4 +1496,17 @@ button.pentaho-button.newToolbarDropdownButton {
 hr {
   border: 0 none;
   border-top: 1px solid #e0e0e0;
+}
+
+.section-divider-title {
+  display: block;
+  padding-top: 15px;
+  padding-left: 0;
+  padding-bottom: 5px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+  color: #999;
+  font-family: opensansregular, Helvetica, Arial, Sans serif;
+  font-weight: normal;
+  font-size: 14px;
 }

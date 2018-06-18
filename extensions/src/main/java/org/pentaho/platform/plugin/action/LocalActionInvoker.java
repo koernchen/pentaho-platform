@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.plugin.action;
@@ -103,6 +106,6 @@ public class LocalActionInvoker extends DefaultActionInvoker {
     // call getStreamProvider, in addition to creating the provider, this method also adds values to the map that
     // serialize the stream provider and make it possible to deserialize and recreate it for remote execution.
     getStreamProvider( params );
-    return invokeActionImpl( actionBean, actionUser, params );
+    return super.invokeAction( actionBean, actionUser, params );
   }
 }

@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.scheduler2.action;
@@ -62,6 +65,35 @@ public class DefaultActionInvoker implements IActionInvoker {
   }
 
   /**
+   *
+   * Validates that the conditions required for the {@link IAction} to be invoked are true, throwing an
+   * {@link ActionInvocationException}, if the conditions are not met.
+   *
+   * @param actionBean The {@link IAction} to be invoked
+   * @param actionUser The user invoking the {@link IAction}
+   * @param params     the {@link Map} or parameters needed to invoke the {@link IAction}
+   * @return the {@link IActionInvokeStatus} object containing information about the action invocation
+   * @throws ActionInvocationException when conditions needed to invoke the {@link IAction} are not met
+   */
+  public void validate( final IAction actionBean, final String actionUser,
+                        final Map<String, Serializable> params ) throws ActionInvocationException {
+
+    final String workItemUid = ActionUtil.extractUid( params );
+
+    if ( actionBean == null || params == null ) {
+      final String failureMessage = Messages.getInstance().getCantInvokeNullAction();
+      WorkItemLifecycleEventUtil.publish( workItemUid, params, WorkItemLifecyclePhase.FAILED,  failureMessage );
+      throw new ActionInvocationException( failureMessage );
+    }
+
+    if ( !isSupportedAction( actionBean ) ) {
+      final String failureMessage = Messages.getInstance().getUnsupportedAction( actionBean.getClass().getName() );
+      WorkItemLifecycleEventUtil.publish( workItemUid, params, WorkItemLifecyclePhase.FAILED, failureMessage );
+      throw new ActionInvocationException( failureMessage );
+    }
+  }
+
+  /**
    * Invokes the provided {@link IAction} as the provided {@code actionUser}.
    *
    * @param actionBean the {@link IAction} being invoked
@@ -74,6 +106,7 @@ public class DefaultActionInvoker implements IActionInvoker {
   public IActionInvokeStatus invokeAction( final IAction actionBean,
                                            final String actionUser,
                                            final Map<String, Serializable> params ) throws Exception {
+    validate( actionBean, actionUser, params );
     return invokeActionImpl( actionBean, actionUser, params );
   }
 
@@ -137,7 +170,8 @@ public class DefaultActionInvoker implements IActionInvoker {
       status.setThrowable( t );
     }
     status.setRequiresUpdate( requiresUpdate );
-
+    // Set the execution Status
+    status.setExecutionStatus( actionBean.isExecutionSuccessful() );
     return status;
   }
 

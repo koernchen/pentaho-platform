@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.web.http.api.resources;
@@ -25,6 +28,7 @@ import org.apache.log4j.helpers.Loader;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.codehaus.enunciate.jaxrs.ResponseCode;
 import org.codehaus.enunciate.jaxrs.StatusCodes;
+import org.owasp.encoder.Encode;
 
 import javax.ws.rs.FormParam;
 import javax.ws.rs.PUT;
@@ -81,7 +85,7 @@ public class Log4jResource {
           catLog.setLevel( Level.toLevel( targetLevel, root.getLevel() ) );
           return Response.ok( "Setting log level for: '" + catLog.getName() + "' to be: " + catLog.getLevel() ).build();
         }
-        return Response.notModified( "Category: '" + category + "' not found, log level not modified." ).build();
+        return Response.notModified( "Category: '" + Encode.forHtml( category ) + "' not found, log level not modified." ).build();
       }
 
       root.setLevel( Level.toLevel( targetLevel, root.getLevel() ) );

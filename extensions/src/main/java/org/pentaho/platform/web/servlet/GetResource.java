@@ -1,4 +1,5 @@
 /*!
+ *
  * This program is free software; you can redistribute it and/or modify it under the
  * terms of the GNU Lesser General Public License, version 2.1 as published by the Free Software
  * Foundation.
@@ -12,7 +13,9 @@
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU Lesser General Public License for more details.
  *
- * Copyright (c) 2002-2017 Hitachi Vantara..  All rights reserved.
+ *
+ * Copyright (c) 2002-2018 Hitachi Vantara. All rights reserved.
+ *
  */
 
 package org.pentaho.platform.web.servlet;
@@ -66,7 +69,7 @@ public class GetResource extends ServletBase {
 
       if ( ( resource == null ) || StringUtil.doesPathContainParentPathSegment( resource ) ) {
         error( Messages.getInstance().getErrorString( "GetResource.ERROR_0001_RESOURCE_PARAMETER_MISSING" ) ); //$NON-NLS-1$
-        response.setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
+        response.sendError( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
         return;
       }
       String resLower = resource.toLowerCase();
@@ -79,7 +82,7 @@ public class GetResource extends ServletBase {
         String defaultRole = PentahoSystem.get( String.class, "defaultRole", null ); // gets defaultRole from pentahoObjects-s-s.x
         if ( defaultRole != null ) {
           if ( !SecurityHelper.getInstance().isGranted( session, new SimpleGrantedAuthority( defaultRole ) ) ) {
-            response.setStatus( HttpServletResponse.SC_FORBIDDEN );
+            response.sendError( HttpServletResponse.SC_FORBIDDEN );
             return;
           }
         }
@@ -91,7 +94,7 @@ public class GetResource extends ServletBase {
         resourcePath = resource;
       } else {
         error( Messages.getInstance().getErrorString( "GetResource.ERROR_0002_INVALID_FILE", resource ) ); //$NON-NLS-1$
-        response.setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
+        response.sendError( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
         return;
       }
 
@@ -101,7 +104,7 @@ public class GetResource extends ServletBase {
       InputStream in = asqr.getInputStream( RepositoryFilePermission.READ, LocaleHelper.getLocale() );
       if ( in == null ) {
         error( Messages.getInstance().getErrorString( "GetResource.ERROR_0003_RESOURCE_MISSING", resourcePath ) ); //$NON-NLS-1$
-        response.setStatus( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
+        response.sendError( HttpServletResponse.SC_SERVICE_UNAVAILABLE );
         return;
       }
       String mimeType = getServletContext().getMimeType( resourcePath );
